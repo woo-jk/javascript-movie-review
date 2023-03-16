@@ -8,7 +8,7 @@ export const fetchMovieListWithKeyword = async (pageNumber, keyword) => {
 };
 
 export const fetchPopularMovieList = async (pageNumber) => {
-  const url = `${popularUrl}?api_key=${process.env.API_KEY}&language=ko&page=${pageNumber}`;
+  const url = `${popularUrl}?api_key=${process.env.WEBPACK_API_KEY}&language=ko&page=${pageNumber}`;
 
   return await fetchApi(url);
 };
