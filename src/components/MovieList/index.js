@@ -1,4 +1,5 @@
 import { fetchMovieListWithKeyword, fetchPopularMovieList } from "../../apis";
+import { LIST_TYPE } from "../../constants/common";
 import Movie from "../../domain/Movie";
 import "./index.css";
 import MovieItem from "./MovieItem";
@@ -22,8 +23,11 @@ class MovieList {
     return `
         <section class="item-view">
           <h2 class="search-title"></h2>
-          <ul class="item-list"></ul>
-          <ul class="skeleton-container"></ul>
+          <div class="list-container">
+            <ul class="item-list"></ul>
+            <ul class="skeleton-container"></ul>
+            <div class="error-container"></div>
+          </div>
           <button class="more btn primary full-width">더 보기</button>
         </section>
       `;
@@ -44,9 +48,19 @@ class MovieList {
     const $searchTitle = this.$target.querySelector(".search-title");
 
     const text =
-      title || (type === "popular" ? "지금 인기있는 영화" : `"${searchKeyword}" 검색결과`);
+      title || (type === LIST_TYPE.POPULAR ? "지금 인기있는 영화" : `"${searchKeyword}" 검색결과`);
 
     $searchTitle.innerText = text;
+  }
+
+  renderErrorMessage(message) {
+    const $errorContainer = this.$target.querySelector(".error-container");
+    const messageTemplate = `
+    <h3 class="error-title">영화 목록을 불러오는데 문제가 발생했습니다 :(</h2>
+    <p class="error-message">[실패 사유]</p>
+    <p class="error-message">${message}</p>`;
+
+    $errorContainer.insertAdjacentHTML("beforeend", messageTemplate);
   }
 
   async renderMovieList() {
@@ -55,6 +69,7 @@ class MovieList {
     this.toggleSkeletonContainerVisibility();
     const fetchedMovieData = await this.fetchMovieList();
     this.toggleSkeletonContainerVisibility();
+    if (!fetchedMovieData) return;
 
     if (!this.isExistMovie(fetchedMovieData)) {
       const { searchKeyword } = this.#props;
@@ -70,15 +85,16 @@ class MovieList {
   async fetchMovieList() {
     const { type, searchKeyword } = this.#props;
     try {
-      if (type === "popular") {
+      if (type === LIST_TYPE.POPULAR) {
         return await fetchPopularMovieList(this.#page);
       }
-      if (type === "search") {
+      if (type === LIST_TYPE.SEARCH) {
         return await fetchMovieListWithKeyword(this.#page, searchKeyword);
       }
-    } catch (e) {
-      this.renderTitle("영화 리스트를 불러오는데 실패 했습니다 :(");
+    } catch (error) {
+      this.renderErrorMessage(error.message);
       this.toggleMoreButton();
+      return false;
     }
   }
 
